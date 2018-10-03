@@ -20,7 +20,7 @@ vocab_size = len(load.wids) + 2
 
 tf.reset_default_graph()
 x = tf.placeholder(dtype=tf.int64, shape=[None, None], name="x")
-y = tf.placeholder(dtype=tf.int32, shape=[None, None], name="y")
+y = tf.placeholder(dtype=tf.float32, shape=[None, None], name="y")
 
 
 def get_lstm_cell():
@@ -80,7 +80,7 @@ with tf.name_scope('accuracy'):
     # corrects = tf.equal(tf.argmax(y, 1), tf.argmax(y_hats, 1))
     # accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
     # tf.summary.scalar('accuracy', accuracy)
-	correct_pred = tf.equal(tf.cast(tf.round(y_hats), tf.int32), y)
+	correct_pred = tf.equal(tf.cast(tf.round(y_hats), tf.float32), y)
 	accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 	tf.summary.scalar('accuracy', accuracy)
 
