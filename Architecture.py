@@ -69,7 +69,8 @@ with tf.name_scope('cost'):
 	# cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=y_hats)
 	# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.stop_gradient(y), logits=y_hats)\
 	# + tf.add_n([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()]))
-	cost = tf.losses.mean_squared_error(y_hats, y)
+	# cost = tf.losses.mean_squared_error(y_hats, y)
+	cost = tf.reduce_mean(tf.square(tf.subtract(y_hats, y)) + tf.add_n([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()]))
 	tf.summary.scalar('cost', cost)
 
 with tf.variable_scope('train_step', reuse=tf.AUTO_REUSE):
@@ -89,11 +90,11 @@ no_of_ts_batches = int(len(load.test)/batch_size)
 train_loss = []
 test_loss = []
 
-# sess = tf.Session()
-session_conf = tf.ConfigProto(
-      intra_op_parallelism_threads=1,
-      inter_op_parallelism_threads=1)
-sess = tf.Session(config=session_conf)
+sess = tf.Session()
+# session_conf = tf.ConfigProto(
+#       intra_op_parallelism_threads=1,
+#       inter_op_parallelism_threads=1)
+# sess = tf.Session(config=session_conf)
 
 some_time = str(time.time())
 
