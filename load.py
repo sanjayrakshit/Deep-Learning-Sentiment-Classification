@@ -47,9 +47,9 @@ class Load_data:
                 review = [self.wids.get(item, len(self.wids)+1) for item in review.split()]
                 train_x.append(review)
                 if folder.endswith("pos"):
-                    train_y.append(np.array([0, 1]))
+                    train_y.append(np.array([1]))
                 else:
-                    train_y.append(np.array([1, 0]))
+                    train_y.append(np.array([0]))
         
         print("Parsing test data...")
         rows = []

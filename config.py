@@ -1,6 +1,6 @@
 batch_size = 128
 sequence_length = 200
-num_classes = 2
+num_classes = 1
 word_embedding_size = 300
 
 rnn_cell_size = 1

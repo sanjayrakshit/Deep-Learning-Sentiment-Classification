@@ -16,12 +16,11 @@ else:
 	with open("object.Load_data", "rb") as f:
 		load = pickle.load(f)
 
-
 vocab_size = len(load.wids) + 2
 
 tf.reset_default_graph()
 x = tf.placeholder(dtype=tf.int64, shape=[None, None], name="x")
-y = tf.placeholder(dtype=tf.float32, shape=[None, None], name="y")
+y = tf.placeholder(dtype=tf.int32, shape=[None, None], name="y")
 
 
 def get_lstm_cell():
@@ -38,7 +37,7 @@ def create_rnn():
 def model():
 	# getting the embedding
 	with tf.name_scope("embedding"):
-		word_embedding = tf.Variable(tf.random_normal(shape=[vocab_size, word_embedding_size]))
+		word_embedding = tf.Variable(tf.truncated_normal([vocab_size, word_embedding_size], -0.1, 0.1))
 		embedded_words = tf.nn.embedding_lookup(word_embedding, x)
 	
 	# creating the rnn structure
@@ -53,7 +52,7 @@ def model():
 	
 	dense = tf.contrib.layers.dropout(dense, keep_prob=dropratio_dense)
 
-	prediction = tf.contrib.layers.fully_connected(dense, num_outputs=num_classes, activation_fn=None,
+	prediction = tf.contrib.layers.fully_connected(dense, num_outputs=num_classes, activation_fn=tf.nn.sigmoid,
 												weights_initializer=tf.truncated_normal_initializer(),
 												biases_initializer=tf.zeros_initializer())
 	return prediction
@@ -66,19 +65,23 @@ print(y_hats.get_shape())
 print("The trainable variables are ... ")
 print(tf.trainable_variables())
 
-with tf.name_scope('x_ent'):
-	cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=y_hats)
+with tf.name_scope('cost'):
+	# cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=y_hats)
 	# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.stop_gradient(y), logits=y_hats)\
 	# + tf.add_n([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()]))
-	tf.summary.scalar('x_ent', cost)
+	cost = tf.losses.mean_squared_error(y_hats, y)
+	tf.summary.scalar('cost', cost)
 
 with tf.variable_scope('train_step', reuse=tf.AUTO_REUSE):
     train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 with tf.name_scope('accuracy'):
-    corrects = tf.equal(tf.argmax(y, 1), tf.argmax(y_hats, 1))
-    accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
-    tf.summary.scalar('accuracy', accuracy)
+    # corrects = tf.equal(tf.argmax(y, 1), tf.argmax(y_hats, 1))
+    # accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
+    # tf.summary.scalar('accuracy', accuracy)
+	correct_pred = tf.equal(tf.cast(tf.round(y_hats), tf.int32), y)
+	accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+	tf.summary.scalar('accuracy', accuracy)
 
 
 no_of_tr_batches = int(len(load.train)/batch_size)
@@ -86,7 +89,11 @@ no_of_ts_batches = int(len(load.test)/batch_size)
 train_loss = []
 test_loss = []
 
-sess = tf.Session()
+# sess = tf.Session()
+session_conf = tf.ConfigProto(
+      intra_op_parallelism_threads=1,
+      inter_op_parallelism_threads=1)
+sess = tf.Session(config=session_conf)
 
 some_time = str(time.time())
 
@@ -130,10 +137,4 @@ for i in range(epoch):
 
 	print('Train loss:', train_loss[-1])
 	print('Validation loss:', test_loss[-1])
-	temp_test = list(zip(*load.test))
-	print('Validation accuracy:', sess.run(
-		accuracy, {
-			x: temp_test[0], y: temp_test[1]
-		}
-	))
 	print('='*40)
