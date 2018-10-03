@@ -9,7 +9,6 @@ import numpy as np
 import random
 
 
-
 class Load_data:
     def __init__(self, batch_size, sequence_length):
         self.batch_size = batch_size
@@ -66,8 +65,9 @@ class Load_data:
         
         train_x = pad_sequences(train_x, maxlen=self.sequence_length)
         test_x = pad_sequences(test_x, maxlen=self.sequence_length)
-        self.train = random.shuffle(list(zip(train_x, train_y)))
-        self.test = random.shuffle(list(zip(test_x, test_y)))
+        self.train = list(zip(train_x, train_y))
+        self.test = list(zip(test_x, test_y))
+        random.shuffle(self.train); random.shuffle(self.test)
 
 
     def get_train_batch(self, i):

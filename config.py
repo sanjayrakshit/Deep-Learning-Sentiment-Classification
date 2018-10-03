@@ -4,7 +4,7 @@ num_classes = 2
 word_embedding_size = 300
 
 rnn_cell_size = 1
-rnn_layer_size = 2
+rnn_layer_size = 1
 
 dropratio_lstm = 0.5
 dense_layer_size = 100
