@@ -6,6 +6,7 @@ from keras.preprocessing.sequence import pad_sequences
 import glob
 from tqdm import tqdm
 import numpy as np
+import random
 
 
 
@@ -65,8 +66,8 @@ class Load_data:
         
         train_x = pad_sequences(train_x, maxlen=self.sequence_length)
         test_x = pad_sequences(test_x, maxlen=self.sequence_length)
-        self.train = list(zip(train_x, train_y))
-        self.test = list(zip(test_x, test_y))
+        self.train = random.shuffle(list(zip(train_x, train_y)))
+        self.test = random.shuffle(list(zip(test_x, test_y)))
 
 
     def get_train_batch(self, i):
