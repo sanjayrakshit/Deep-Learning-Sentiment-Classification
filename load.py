@@ -59,9 +59,9 @@ class Load_data:
                 review = [self.wids.get(item, len(self.wids)+1) for item in review.split()]
                 test_x.append(review)
                 if folder.endswith("pos"):
-                    test_y.append(np.array([0, 1]))
+                    test_y.append(np.array([1]))
                 else:
-                    test_y.append(np.array([1, 0]))
+                    test_y.append(np.array([0]))
         
         train_x = pad_sequences(train_x, maxlen=self.sequence_length)
         test_x = pad_sequences(test_x, maxlen=self.sequence_length)
