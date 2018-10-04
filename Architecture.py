@@ -63,14 +63,14 @@ print(y_hats)
 print(y_hats.get_shape())
 
 print("The trainable variables are ... ")
-print(tf.trainable_variables())
+print(*tf.trainable_variables(), sep='\n')
 
 with tf.name_scope('cost'):
 	# cost = tf.losses.softmax_cross_entropy(onehot_labels=y, logits=y_hats)
 	# cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=tf.stop_gradient(y), logits=y_hats)\
 	# + tf.add_n([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()]))
 	# cost = tf.losses.mean_squared_error(y_hats, y)
-	cost = tf.reduce_mean(tf.square(tf.subtract(y_hats, y)) + tf.add_n([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()]))
+	cost = tf.reduce_mean(tf.square(tf.subtract(y_hats, y))) + tf.reduce_mean([l2_reg_const*tf.nn.l2_loss(V) for V in tf.trainable_variables()])
 	tf.summary.scalar('cost', cost)
 
 with tf.variable_scope('train_step', reuse=tf.AUTO_REUSE):
@@ -89,6 +89,8 @@ no_of_tr_batches = int(len(load.train)/batch_size)
 no_of_ts_batches = int(len(load.test)/batch_size)
 train_loss = []
 test_loss = []
+train_acc = []
+val_acc = []
 
 sess = tf.Session()
 # session_conf = tf.ConfigProto(
@@ -111,31 +113,36 @@ iter_train = iter_test = 0
 for i in range(epoch):
 	print('epoch:',i+1)
 	time.sleep(1)
-	cc = 0
-    
+	cc = 0; aa = 0
     # for training data
 	for j in range(no_of_tr_batches):
 		xx, yy = load.get_train_batch(i=j)
-		_, c, s = sess.run([train_step, cost, summ], {x: xx, y:yy})
+		_, c, s, a = sess.run([train_step, cost, summ, accuracy], {x: xx, y:yy})
 		cc += c
+		aa += a
 		writer_tr.add_summary(s, iter_train)
 		iter_train += 1
 		print(f'{j+1} / {no_of_tr_batches}', end='\r')
+	train_acc.append(aa/no_of_tr_batches)
 	train_loss.append(cc/no_of_tr_batches)
 	print('')
     
     # for validation data
-	cc = 0
+	cc = 0; aa = 0
 	for j in range(no_of_ts_batches):
 		xx, yy = load.get_test_batch(i=j)
-		c, s = sess.run([cost, summ], {x: xx, y:yy})
+		c, s, a = sess.run([cost, summ, accuracy], {x: xx, y:yy})
 		writer_ts.add_summary(s, iter_test)
 		iter_test += 1
 		cc += c
+		aa += a
 		print(f'{j+1} / {no_of_ts_batches}', end='\r')
+	val_acc.append(aa/no_of_ts_batches)
 	test_loss.append(cc/no_of_ts_batches)
 	print('')
 
 	print('Train loss:', train_loss[-1])
 	print('Validation loss:', test_loss[-1])
+	print('Train acc:', train_acc[-1])
+	print('Val acc:', val_acc[-1])
 	print('='*40)
