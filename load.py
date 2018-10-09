@@ -12,8 +12,8 @@ import random
 class Load_data:
     def __init__(self, batch_size, sequence_length):
         self.batch_size = batch_size
-        self.train_path = os.path.join(".", "aclImdb", "train")
-        self.test_path = os.path.join(".", "aclImdb", "test")
+        self.train_path = os.path.join(".", "aclImdb", "test")
+        self.test_path = os.path.join(".", "aclImdb", "train")
         self.sequence_length = sequence_length
 
 
@@ -32,9 +32,12 @@ class Load_data:
         for folder in [os.path.join(self.train_path, "pos"), os.path.join(self.train_path, "neg")]:
             for file in tqdm(glob.glob(os.path.join(folder, "*.txt"))):
                 all_reviews += self.preprocess(open(file).read().strip()) + " "
-        tokens = dict(Counter(all_reviews.strip().split())).keys()
+        tokens = dict(Counter(all_reviews.strip().split()))
+        for i in list(tokens.keys()):
+            if tokens[i] <=5:
+                del tokens[i]
         self.wids = {
-            item: index+1 for index, item in enumerate(tokens)
+            item: index+1 for index, item in enumerate(tokens.keys())
         }
 
     

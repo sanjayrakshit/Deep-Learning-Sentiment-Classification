@@ -62,29 +62,49 @@ def build_rnn(vocab_size, word_embedding_size, batch_size, rnn_cell_size, rnn_la
         outputs, final_state = tf.nn.dynamic_rnn(cell, embed,
                                                  initial_state=initial_state)    
     
-    # Create the fully connected layers
-    with tf.name_scope("fully_connected"):
+    with tf.name_scope('FC_layers_self_defined'):
+        w1 = tf.get_variable(name='w1', shape=[outputs[:,-1].get_shape()[-1] ,dense_layer_size],\
+            initializer=tf.keras.initializers.he_normal())
+        b1 = tf.get_variable(name='b1', shape=[1 ,dense_layer_size],\
+            initializer=tf.zeros_initializer())
+        w2 = tf.get_variable(name='w2', shape=[dense_layer_size ,dense_layer_size],\
+            initializer=tf.keras.initializers.he_normal())
+        b2 = tf.get_variable(name='b2', shape=[1 ,dense_layer_size],\
+            initializer=tf.zeros_initializer())
         
-        # Initialize the weights and biases
-        # weights = tf.truncated_normal_initializer(stddev=0.1)
-        # biases = tf.zeros_initializer()
-        
-        dense = tf.contrib.layers.fully_connected(
-            inputs = outputs[:, -1],
-            num_outputs = dense_layer_size,
-            activation_fn = tf.nn.leaky_relu,
-            weights_initializer = tf.keras.initializers.he_normal(),
-            biases_initializer = tf.zeros_initializer())
+        dense = tf.nn.leaky_relu(tf.add(tf.matmul(outputs[:, -1], w1), b1))
         dense = tf.contrib.layers.dropout(dense, keep_prob_dense)
+        dense = tf.nn.leaky_relu(tf.add(tf.matmul(dense, w2), b2))
+        dense = tf.contrib.layers.dropout(dense, keep_prob_dense)
+    # Create the fully connected layers
+    # with tf.name_scope("fully_connected"):
+        
+    #     # Initialize the weights and biases
+    #     # weights = tf.truncated_normal_initializer(stddev=0.1)
+    #     # biases = tf.zeros_initializer()
+        
+    #     dense = tf.contrib.layers.fully_connected(
+    #         inputs = outputs[:, -1],
+    #         num_outputs = dense_layer_size,
+    #         activation_fn = tf.nn.leaky_relu,
+    #         weights_initializer = tf.keras.initializers.he_normal(),
+    #         biases_initializer = tf.zeros_initializer())
+    #     dense = tf.contrib.layers.dropout(dense, keep_prob_dense)
         
     # Make the predictions
     with tf.name_scope('predictions'):
-        predictions = tf.contrib.layers.fully_connected(dense, 
-                                                        num_outputs = num_classes, 
-                                                        activation_fn=tf.sigmoid,
-                                                        weights_initializer = tf.truncated_normal_initializer(),
-                                                        biases_initializer = tf.zeros_initializer())
+        wp = tf.get_variable('wp', shape=[dense_layer_size, num_classes], initializer=tf.truncated_normal_initializer())
+        bp = tf.get_variable('bp', shape=[1, num_classes], initializer=tf.zeros_initializer())
+        
+        predictions = tf.nn.sigmoid(tf.add(tf.matmul(dense, wp), bp))
         tf.summary.histogram('predictions', predictions)
+    # with tf.name_scope('predictions'):
+    #     predictions = tf.contrib.layers.fully_connected(dense, 
+    #                                                     num_outputs = num_classes, 
+    #                                                     activation_fn=tf.sigmoid,
+    #                                                     weights_initializer = tf.truncated_normal_initializer(),
+    #                                                     biases_initializer = tf.zeros_initializer())
+    #     tf.summary.histogram('predictions', predictions)
     
     # Calculate the cost
     with tf.name_scope('cost'):
